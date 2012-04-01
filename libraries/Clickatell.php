@@ -1,0 +1,119 @@
+<?php  if (!defined('BASEPATH')) exit('No direct script access allowed');
+
+/**
+ * Smarty Class
+ *
+ * @package		Clickatell
+ * @subpackage	Libraries
+ * @category	SMS Gateway
+ * @author		Zachie du Bruyn
+ */
+class Clickatell
+{
+    const ERR_NONE              = 0;
+    const ERR_AUTH_FAIL         = 1;
+    const ERR_SEND_MESSAGE_FAIL = 2;
+    const ERR_SESSION_EXPIRED   = 3;
+
+    // public vars
+    public $error = SELF::ERR_NONE;
+    public $error_message = '';
+
+    // private vars
+    private $ci;
+    private $session_id = FALSE;
+
+    const BASEURL = "http://api.clickatell.com";
+
+    /**
+     * Class constructor - loads CodeIgnighter and Configs
+     *
+     */
+    public function __construct()
+    {
+        $this->ci =& get_instance();
+        $this->ci->config->load('clickatell');
+
+        $this->username = $this->ci->config->item('clickatell_username');
+        $this->password = $this->ci->config->item('clickatell_password');
+        $this->api_id   = $this->ci->config->item('clickatell_api_id');
+    }
+
+    /**
+     * Method for Authentication with Clickatell
+     *
+     * @return string $session_id
+     */
+    public function authenticate()
+    {
+        $url = self::BASEURL.'/http/auth?user='.$this->username
+             . '&password='.$this->password.'&api_id='.$this->api_id;
+
+        $response = $this->_do_api_call($url);
+        $response = explode(':',$response);
+
+        if ($response[0] == 'OK')
+        {
+            $this->session_id = trim($response[1]);
+            return $this->session_id;
+        }
+        else
+        {
+            $this->error = self::ERR_AUTH_FAIL;
+            $this->error_message = $response[0];
+            return FALSE;
+        }
+    }
+
+    /**
+     * Method to send a text message to number
+     *
+     * @access  public
+     * @param   str $to
+     * @param   str $message
+     * @return  message_id
+     */
+    public function send_message($to, $message)
+    {
+        if ($this->session_id == FALSE)
+        {
+            $this->authenticate();
+        }
+
+        if ($this->error == self::ERR_NONE)
+        {
+            $message = urlencode($message);
+            $url = self::BASEURL.'/http/sendmsg?session_id='.$this->session_id
+                . '&to='.$to.'&text='.$message;
+
+            $result = $this->_do_api_call($url);
+            $result = explode(':',$result);
+
+            if ($result[0] == 'ID')
+            {
+                $api_message_id = $result[1];
+                return $api_message_id;
+            }
+            else
+            {
+                $this->error = self::ERR_SEND_MESSAGE_FAIL;
+                $this->error_message = $result[0];
+                return FALSE;
+            }
+        }
+    }
+
+    /**
+     * Method to call HTTP url - to be expanded
+     *
+     * @param   string $url
+     * @return  string response
+     */
+    private function _do_api_call($url)
+    {
+        $result = file($url);
+        $result = implode("\n",$result);
+        return $result;
+    }
+}
+
