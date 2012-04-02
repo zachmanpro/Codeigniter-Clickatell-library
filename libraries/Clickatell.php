@@ -14,6 +14,8 @@ class Clickatell
     const ERR_AUTH_FAIL         = 1;
     const ERR_SEND_MESSAGE_FAIL = 2;
     const ERR_SESSION_EXPIRED   = 3;
+    const ERR_PING_FAIL         = 4;
+    const ERR_CALL_FAIL         = 5;
 
     // public vars
     public $error = SELF::ERR_NONE;
@@ -27,7 +29,6 @@ class Clickatell
 
     /**
      * Class constructor - loads CodeIgnighter and Configs
-     *
      */
     public function __construct()
     {
@@ -49,18 +50,18 @@ class Clickatell
         $url = self::BASEURL.'/http/auth?user='.$this->username
              . '&password='.$this->password.'&api_id='.$this->api_id;
 
-        $response = $this->_do_api_call($url);
-        $response = explode(':',$response);
+        $result = $this->_do_api_call($url);
+        $result = explode(':',$response);
 
-        if ($response[0] == 'OK')
+        if ($result[0] == 'OK')
         {
-            $this->session_id = trim($response[1]);
+            $this->session_id = trim($result[1]);
             return $this->session_id;
         }
         else
         {
             $this->error = self::ERR_AUTH_FAIL;
-            $this->error_message = $response[0];
+            $this->error_message = $result[0];
             return FALSE;
         }
     }
@@ -69,8 +70,8 @@ class Clickatell
      * Method to send a text message to number
      *
      * @access  public
-     * @param   str $to
-     * @param   str $message
+     * @param   string $to
+     * @param   string $message
      * @return  message_id
      */
     public function send_message($to, $message)
@@ -102,7 +103,69 @@ class Clickatell
             }
         }
     }
+    
+    
+    public function get_balance()
+    {
+        if ($this->session_id == FALSE)
+        {
+            $this->authenticate();
+        }
 
+        if ($this->error == self::ERR_NONE)
+        {
+            $url = self::BASEURL.'/http/ping?getbalance='.$this->session_id;
+            
+            $result = $this->_do_api_call($url);
+            $result = explode(':',$result);
+            
+            if ($result[0] == 'Credit')
+            {
+                return (float)$result[1];
+            }
+            else
+            {
+                $this->error = self::ERR_CALL_FAIL;
+                $this->error_message = $result[0];
+                return FALSE;
+            }
+        }       
+    }
+    
+    /**
+     * Method to send a ping to keep session live
+     *
+     * @access  public
+     * @return  bool $success
+     */
+    public function ping()
+    {
+        if ($this->session_id == FALSE)
+        {
+            $this->authenticate();
+        }
+
+        if ($this->error == self::ERR_NONE)
+        {
+            $url = self::BASEURL.'/http/ping?session_id='.$this->session_id;
+            
+            $result = $this->_do_api_call($url);
+            $result = explode(':',$result);
+            
+            if ($result[0] == 'OK')
+            {
+                return TRUE;
+            }
+            else
+            {
+                $this->error = self::ERR_PING_FAIL;
+                $this->error_message = $result[0];
+                return FALSE;
+            }
+        }
+    }
+    
+    
     /**
      * Method to call HTTP url - to be expanded
      *
@@ -117,3 +180,5 @@ class Clickatell
     }
 }
 
+/* End of file Clickatell.php */
+/* Location: ./application/libraries/Clickatell.php */
