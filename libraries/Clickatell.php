@@ -114,7 +114,7 @@ class Clickatell
 
         if ($this->error == self::ERR_NONE)
         {
-            $url = self::BASEURL.'/http/ping?getbalance='.$this->session_id;
+            $url = self::BASEURL.'/http/getbalance?session_id='.$this->session_id;
             
             $result = $this->_do_api_call($url);
             $result = explode(':',$result);
