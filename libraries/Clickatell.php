@@ -1,7 +1,7 @@
 <?php  if (!defined('BASEPATH')) exit('No direct script access allowed');
 
 /**
- * Smarty Class
+ * Clickatell Class
  *
  * @package		Clickatell
  * @subpackage	Libraries
