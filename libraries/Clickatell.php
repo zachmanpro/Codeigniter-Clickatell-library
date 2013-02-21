@@ -52,7 +52,7 @@ class Clickatell
              . '&password='.$this->password.'&api_id='.$this->api_id;
 
         $result = $this->_do_api_call($url);
-        $result = explode(':',$response);
+        $result = explode(':',$result);
 
         if ($result[0] == 'OK')
         {
