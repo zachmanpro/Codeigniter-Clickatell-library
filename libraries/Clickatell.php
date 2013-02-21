@@ -103,6 +103,10 @@ class Clickatell
                 return FALSE;
             }
         }
+        else
+        {
+            return FALSE;
+        }
     }
     
     
