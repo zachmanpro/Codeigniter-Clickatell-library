@@ -38,6 +38,7 @@ class Clickatell
         $this->username = $this->ci->config->item('clickatell_username');
         $this->password = $this->ci->config->item('clickatell_password');
         $this->api_id   = $this->ci->config->item('clickatell_api_id');
+        $this->from_no   = $this->ci->config->item('clickatell_from_no');
     }
 
     /**
@@ -51,7 +52,7 @@ class Clickatell
              . '&password='.$this->password.'&api_id='.$this->api_id;
 
         $result = $this->_do_api_call($url);
-        $result = explode(':',$response);
+        $result = explode(':',$result);
 
         if ($result[0] == 'OK')
         {
@@ -85,7 +86,7 @@ class Clickatell
         {
             $message = urlencode($message);
             $url = self::BASEURL.'/http/sendmsg?session_id='.$this->session_id
-                . '&to='.$to.'&text='.$message;
+                . '&to='.$to.'&text='.$message.'&from='.$this->from_no.'&MO=1';
 
             $result = $this->_do_api_call($url);
             $result = explode(':',$result);
@@ -101,6 +102,10 @@ class Clickatell
                 $this->error_message = $result[0];
                 return FALSE;
             }
+        }
+        else
+        {
+            return FALSE;
         }
     }
     
